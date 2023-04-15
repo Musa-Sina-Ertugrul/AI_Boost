@@ -24,6 +24,7 @@
     <ProjectGuid>{5bb6d860-d0cc-4f6e-81c0-628e31753f42}</ProjectGuid>
     <RootNamespace>AiLib</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>AI_Boost</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -128,6 +129,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AiLib.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DataSet.h" />
+    <ClInclude Include="Enums.h" />
+    <ClInclude Include="Layer.h" />
+    <ClInclude Include="Model.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
