@@ -1,7 +1,7 @@
 #pragma once
-#include "Enums.h"
-#include "DataSet.h"
-#include "Layer.h"
+#include"Enums.h"
+#include"DataSet.h"
+#include"Layer.h"
 #include <vector>
 #include <cblas.h>
 using namespace std;
