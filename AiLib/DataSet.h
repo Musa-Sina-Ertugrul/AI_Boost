@@ -3,13 +3,19 @@
 using namespace std;
 class DataSet {
 	public:
-		vector<vector<float&>> inputs;
-		vector<vector<float&>> outputs;
-		DataSet(vector<vector<float&>> inputs, vector<vector<float&>> outputs) {
+		vector<vector<float*>> inputs;
+		vector<vector<float*>> outputs;
+		DataSet(vector<vector<float*>> inputs, vector<vector<float*>> outputs);
+		~DataSet();
+
+};
+
+DataSet::DataSet(vector<vector<float*>> inputs, vector<vector<float*>> outputs) {
 			this->inputs = inputs;
 			this->outputs = outputs;
-		}
-		~DataSet() {
+}
+
+DataSet::~DataSet() {
 			for (int i = 0; i < this->inputs.size(); i++) {
 				this->inputs[i].clear();
 			}
@@ -19,5 +25,3 @@ class DataSet {
 			}
 			this->outputs.clear();
 		}
-
-};
