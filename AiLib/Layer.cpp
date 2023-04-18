@@ -1,8 +1,11 @@
 #pragma once
-#include "Enums.h"
+#include "Enums.hpp"
 #include <vector>
 #include <random>
 #include <cmath>
+#include <pybind11/pybind11.h>
+#include "Layer.hpp"
+#include <python3.10/Python.h>
 using namespace std;
 class Layer
 {
@@ -51,4 +54,9 @@ Layer::~Layer()
 	this->outputs.clear();
 	this->weights.clear();
 	this->inputs.clear();
+}
+
+void init_my_module_Layer(pybind11::module& m){
+	pybind11::class_<Layer>(m,"Layer")
+		.def(pybind11::init<int, int, LayerF&&>());
 }

@@ -1,10 +1,15 @@
 #pragma once
-#include"Enums.h"
-#include"DataSet.h"
-#include"Layer.h"
+#include"Enums.hpp"
+#include"DataSet.hpp"
+#include"Layer.hpp"
 #include <vector>
 #include <cblas.h>
 #include <cmath>
+#include <iostream>
+#include <pybind11/pybind11.h>
+#include "Model.hpp"
+#include <python3.10/Python.h>
+
 using namespace std;
 
 class Model
@@ -19,16 +24,47 @@ public:
 	RegFType regType;
 	float regLambda;
 	float learningRate;
-	Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float &&dropOutRate,RegFType &&regType,float &&regLambda,LossFType &&lossType,float &&learningRate);
+	bool ZeroToOne;
+	int16_t bacthSize;
+	Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float &&dropOutRate,RegFType &&regType,float &&regLambda,
+	LossFType &&lossType,float &&learningRate,bool ZeroToOne,int16_t bacthSize);
 	~Model();
 	void trainModel(){
+		float correct = 0.0;
+		float total = 0.0;
 		for(int i = 0;i<this->epochs;i++){
 			this->currentEpoch = i;
 			this->layers[0]->inputs[0]=1.0;
 			for(int j = 1;j<sizeof(this->datas->inputs[i])+1;j++){
-				this->layers[0]->inputs[j] = *this->datas->inputs[i][j-1];
+				this->layers[0]->inputs[j] = this->datas->inputs[i][j-1];
 			}
 			this->forward();
+			
+			for(int j = 0;j<this->resultsLoss.size();j++){
+				total = total + this->resultsLoss[j];
+			}
+			if(ZeroToOne){
+				for(int j = 0;j<this->results.size();j++){
+					if(this->results[j]>0.5 && this->datas->outputs[i][j]>0.5){
+						correct = correct + 1.0;
+					}else if(this->results[j]<0.5 && this->datas->outputs[i][j]<0.5){
+						correct = correct + 1.0;
+					}
+					correct = correct / (float)this->results.size();
+				}
+			}else{
+				for(int j = 0;j<this->results.size();j++){
+					if(this->results[j]==this->datas->outputs[i][j]){
+						correct = correct + 1.0;
+					}
+					correct = correct / (float)this->results.size();
+				}
+			}
+			if(this->bacthSize == (i+1)%this->bacthSize){
+				cout<<"error: "<<total/(this->resultsLoss.size()*this->bacthSize)<<"correctness: "<<correct/(float)this->bacthSize<<endl;
+				total = 0.0;
+				correct = 0.0;
+			}
 			this->backward();
 		}
 	}
@@ -36,6 +72,8 @@ private:
 	int16_t currentEpoch;
 	float currentLR;
 	int16_t currentLayer;
+	vector<float> resultsLoss;
+	vector<float> results;
 	void backward(){
 		for(int i = this->currentLayer;i>-1;i--){
 			this->currentLayer = i;
@@ -43,7 +81,7 @@ private:
 				this->cosBounce();
 			}
 			this->gradient();
-			adam();
+			this->adam();
 		}
 	}
 	void forward(){
@@ -59,7 +97,11 @@ private:
 				for(int j = 0;j<this->layers[i]->outputsActiveted.size();j++){
 					this->layers[i+1]->inputs[j] = this->layers[i]->outputsActiveted[j];
 				}
-				
+			}else{
+				for(int j = 1;j<this->layers[i]->outputsActiveted.size();j++){
+					this->resultsLoss[j-1]= this->loss(this->datas->outputs[this->currentEpoch][j-1],this->layers[i]->outputsActiveted[j]);
+					this->results[j-1]=this->layers[i]->outputsActiveted[j];
+				}
 			}
 		}
 	}
@@ -85,7 +127,7 @@ private:
 	void gradient(){
 		if(sizeof(this->layers)-1 == this->currentLayer){
 			for(int j = 1;j<this->layers[this->currentLayer]->outputsActiveted.size();j++){
-				this->layers[this->currentLayer]->grads[j-1]=this->dLoss(*this->datas->outputs[this->currentEpoch][j-1],this->layers[this->currentLayer]->outputsActiveted[j])
+				this->layers[this->currentLayer]->grads[j-1]=this->dLoss(this->datas->outputs[this->currentEpoch][j-1],this->layers[this->currentLayer]->outputsActiveted[j])
 				*this->dActivation(this->layers[this->currentLayer]->outputs[j-1]);
 			}
 			return;
@@ -184,16 +226,16 @@ private:
 		switch (this->lossType)
 		{
 		case BCELoss:
-			return this->dBCELoss(y,yHat);
+			return this->dBCELoss(yHat,y);
 			break;
 		case CELoss:
-			return this->dCELoss(y, yHat);
+			return this->dCELoss(yHat,y);
 			break;
 		case L1Loss:
-			return this->dl1Loss(y, yHat);
+			return this->dl1Loss(yHat,y);
 			break;
 		case L2Loss:
-			return this->dl2Loss(y, yHat);
+			return this->dl2Loss(yHat,y);
 			break;
 		default:
 			throw "type correct loss func";
@@ -268,7 +310,8 @@ private:
 	}
 };
 
-Model::Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float &&dropOutRate,RegFType &&regType,float &&regLambda,LossFType &&lossType,float &&learningRate){
+Model::Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float &&dropOutRate,RegFType &&regType,float &&regLambda,
+LossFType &&lossType,float &&learningRate,bool ZeroToOne,int16_t bacthSize){
 		this->layers = &layers;
 		this->datas = &datas;
 		this->boucingLR = boucingLR;
@@ -278,10 +321,20 @@ Model::Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float
 		this->regLambda = regLambda;
 		this->lossType = lossType;
 		this->learningRate = learningRate;
+		this->resultsLoss.reserve(this->layers[sizeof(this->layers)-1]->outputs.size());
+		this->results.reserve(this->layers[sizeof(this->layers)-1]->outputs.size());
+		this->ZeroToOne = ZeroToOne;
+		this->bacthSize = bacthSize;
 	}
 
 Model::~Model()
 {
 	this->layers = nullptr;
 	this->datas = nullptr;
+}
+
+void init_my_module_Model(pybind11::module& m){
+	pybind11::class_<Model>(m,"Model")
+		.def(pybind11::init<Layer[],DataSet,bool,int16_t,float,RegFType,float,LossFType,float,bool,int16_t>())
+		.def("trainModel",&Model::trainModel);
 }
