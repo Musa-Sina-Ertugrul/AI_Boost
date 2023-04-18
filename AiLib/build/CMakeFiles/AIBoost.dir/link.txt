@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -flto -shared  -o AIBoost.cpython-310-x86_64-linux-gnu.so CMakeFiles/AIBoost.dir/AIBoost.cpp.o  -lOpenBLAS libModel.a libDataSet.a libEnums.a libLayer.a /usr/lib/x86_64-linux-gnu/libpython3.10.so /usr/lib/x86_64-linux-gnu/libpython3.10.so 
