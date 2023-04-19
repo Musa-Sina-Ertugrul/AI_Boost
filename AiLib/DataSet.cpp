@@ -5,16 +5,8 @@
 #include "DataSet.hpp"
 #include <python3.10/Python.h>
 using namespace std;
-class DataSet {
-	public:
-		vector<vector<float&>> inputs;
-		vector<vector<float&>> outputs;
-		DataSet(vector<vector<float&>> inputs, vector<vector<float&>> outputs);
-		~DataSet();
 
-};
-
-DataSet::DataSet(vector<vector<float&>> inputs, vector<vector<float&>> outputs) {
+DataSet::DataSet(vector<vector<float>> inputs, vector<vector<float>> outputs) {
 			this->inputs = inputs;
 			this->outputs = outputs;
 }
@@ -32,5 +24,5 @@ DataSet::~DataSet() {
 
 void init_my_module_DataSet(pybind11::module& m){
 	pybind11::class_<DataSet>(m,"DataSet")
-		.def(pybind11::init<vector<vector<float&>>, vector<vector<float&>>>());
+		.def(pybind11::init<vector<vector<float>>, vector<vector<float>>>());
 }

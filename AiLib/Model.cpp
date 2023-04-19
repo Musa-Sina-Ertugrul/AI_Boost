@@ -3,7 +3,7 @@
 #include"DataSet.hpp"
 #include"Layer.hpp"
 #include <vector>
-#include <cblas.h>
+#include "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h"
 #include <cmath>
 #include <iostream>
 #include <pybind11/pybind11.h>
@@ -12,24 +12,30 @@
 
 using namespace std;
 
-class Model
-{
-public:
-	int16_t epochs;
-	bool boucingLR;
-	LossFType lossType;
-	Layer** layers;
-	DataSet* datas;
-	float dropOutRate;
-	RegFType regType;
-	float regLambda;
-	float learningRate;
-	bool ZeroToOne;
-	int16_t bacthSize;
-	Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float &&dropOutRate,RegFType &&regType,float &&regLambda,
-	LossFType &&lossType,float &&learningRate,bool ZeroToOne,int16_t bacthSize);
-	~Model();
-	void trainModel(){
+	Model::Model(vector<Layer*>layers,DataSet datas,bool boucingLR,int epochs,float dropOutRate,RegFType regType,float regLambda,
+	LossFType lossType,float learningRate,bool ZeroToOne,int bacthSize){
+		this->layers = layers;
+		this->datas = &datas;
+		this->boucingLR = boucingLR;
+		this->epochs = epochs;
+		this->dropOutRate = dropOutRate;
+		this->regType = regType;
+		this->regLambda = regLambda;
+		this->lossType = lossType;
+		this->learningRate = learningRate;
+		this->resultsLoss.reserve(this->layers[this->layers.size()-1]->outputs.size());
+		this->results.reserve(this->layers[this->layers.size()-1]->outputs.size());
+		this->ZeroToOne = ZeroToOne;
+		this->bacthSize = bacthSize;
+	}
+	Model::~Model(){
+	for(int i = 0;i<this->layers.size();i++){
+		delete this->layers[i];
+	}
+	this->layers.clear();
+	this->datas = nullptr;
+}
+	void Model::trainModel(){
 		float correct = 0.0;
 		float total = 0.0;
 		for(int i = 0;i<this->epochs;i++){
@@ -68,13 +74,7 @@ public:
 			this->backward();
 		}
 	}
-private:
-	int16_t currentEpoch;
-	float currentLR;
-	int16_t currentLayer;
-	vector<float> resultsLoss;
-	vector<float> results;
-	void backward(){
+	void Model::backward(){
 		for(int i = this->currentLayer;i>-1;i--){
 			this->currentLayer = i;
 			if(this->boucingLR){
@@ -84,7 +84,7 @@ private:
 			this->adam();
 		}
 	}
-	void forward(){
+	void Model::forward(){
 		for(int i = 0;i<sizeof(this->layers);i++){
 			this->currentLayer = i;
 			this->bachNorm();
@@ -105,7 +105,7 @@ private:
 			}
 		}
 	}
-	void adam(){
+	void Model::adam(){
 		int j = 0;
 		for(int i = 0;i<this->layers[this->currentLayer]->weights.size();i++){
 			if(j == this->layers[this->currentLayer]->out){
@@ -121,10 +121,10 @@ private:
 			j++;
 		}
 	}
-	inline float&& currentGrad(int i,int j){
+	inline float&& Model::currentGrad(int i,int j){
 		return this->layers[this->currentLayer]->weights[i] *this->layers[this->currentLayer]->grads[j];
 	}
-	void gradient(){
+	void Model::gradient(){
 		if(sizeof(this->layers)-1 == this->currentLayer){
 			for(int j = 1;j<this->layers[this->currentLayer]->outputsActiveted.size();j++){
 				this->layers[this->currentLayer]->grads[j-1]=this->dLoss(this->datas->outputs[this->currentEpoch][j-1],this->layers[this->currentLayer]->outputsActiveted[j])
@@ -141,7 +141,7 @@ private:
 			*this->dActivation(this->layers[this->currentLayer]->outputs[i-1]);
 		}
 	}
-	float&& activation(float& y) {
+	float&& Model::activation(float& y) {
 		switch (this->layers[this->currentLayer]->func)
 		{
 		case Tanh:
@@ -158,13 +158,13 @@ private:
 			break;
 		}
 	}
-	inline float&& dRelu(float& x) {
+	inline float&& Model::dRelu(float& x) {
 		if (x > 0.0) {
 			return 1.0;
 		}
 		return 0.0;
 	}
-	float&& dActivation(float& y) {
+	float&& Model::dActivation(float& y) {
 		switch (this->layers[this->currentLayer]->func)
 		{
 		case Tanh:
@@ -181,28 +181,28 @@ private:
 			break;
 		}
 	}
-	inline float&& relu(float& x) {
+	inline float&& Model::relu(float& x) {
 		if (x > 0.0) {
-			return move(x);
+			return float(x);
 		}
 		return 0.0;
 	}
-	inline void cosBounce() {
+	inline void Model::cosBounce() {
 		this->currentLR = cos(this->learningRate * this->currentEpoch);
 	}
-	inline float&& bCELoss(float& yHat, float& y) {
+	inline float&& Model::bCELoss(float& yHat, float& y) {
 		return -(yHat * log(y) + (1 - yHat * (1 - log(1 - y))));
 	}
-	inline float&& cELoss(float& yHat, float& y) {
+	inline float&& Model::cELoss(float& yHat, float& y) {
 		return yHat * log(y);
 	}
-	inline float&& l1Loss(float& yHat, float& y) {
+	inline float&& Model::l1Loss(float& yHat, float& y) {
 		return abs(yHat - y);
 	}
-	inline float&& l2Loss(float& yHat, float& y) {
+	inline float&& Model::l2Loss(float& yHat, float& y) {
 		return (yHat - y)* (yHat - y);
 	}
-	float&& loss(float& yHat, float& input) {
+	float&& Model::loss(float& yHat, float& input) {
 		switch (this->lossType)
 		{
 		case BCELoss:
@@ -222,7 +222,7 @@ private:
 			break;
 		}
 	}
-	float&& dLoss(float& yHat,float& y) {
+	float&& Model::dLoss(float& yHat,float& y) {
 		switch (this->lossType)
 		{
 		case BCELoss:
@@ -242,13 +242,13 @@ private:
 			break;
 		}
 	}
-	inline float&& dBCELoss(float& yHat,float& y) {
+	inline float&& Model::dBCELoss(float& yHat,float& y) {
 		return -(yHat / y - (1 - yHat) / (1 - y));
 	}
-	inline float&& dCELoss(float& yHat,float& y) {
+	inline float&& Model::dCELoss(float& yHat,float& y) {
 		return -((yHat / y) - ((1 - yHat) / (1 - y)));
 	}
-	inline float&& dl1Loss(float& yHat,float& y) {
+	inline float&& Model::dl1Loss(float& yHat,float& y) {
 		if (y > yHat) {
 			return 1.0;
 		}
@@ -257,10 +257,10 @@ private:
 		}
 		return 0.0;
 	}
-	inline float&& dl2Loss(float& yHat,float& y) {
+	inline float&& Model::dl2Loss(float& yHat,float& y) {
 		return -(yHat - y);
 	}
-	void bachNorm() {
+	void Model::bachNorm() {
 		float total = 0.000000;
 		int len = sizeof(this->layers[this->currentLayer]->inputs);
 		for (int i = 0; i < len;i++ ) {
@@ -277,21 +277,21 @@ private:
 		}
 
 	}
-	inline float&& l1Reg() {
+	inline float&& Model::l1Reg() {
 		float total(0.000000);
 		for (int i = 0; i < this->layers[this->currentLayer]->weights.size(); i++) {
 			total += abs(this->layers[this->currentLayer]->weights[i]);
 		}
 		return this->regLambda*total;
 	}
-	inline float&& l2Reg() {
+	inline float&& Model::l2Reg() {
 		float total(0.000000);
 		for (int i = 0; i < this->layers[this->currentLayer]->weights.size(); i++) {
 			total += this->layers[this->currentLayer]->weights[i]*this->layers[this->currentLayer]->weights[i];
 		}
 		return this->regLambda * total;
 	}
-	float&& reg() {
+	float&& Model::reg() {
 		switch (this->regType)
 		{
 		case None:
@@ -308,33 +308,10 @@ private:
 			break;
 		}
 	}
-};
 
-Model::Model(Layer layers[],DataSet &datas,bool &&boucingLR,int16_t epochs,float &&dropOutRate,RegFType &&regType,float &&regLambda,
-LossFType &&lossType,float &&learningRate,bool ZeroToOne,int16_t bacthSize){
-		this->layers = &layers;
-		this->datas = &datas;
-		this->boucingLR = boucingLR;
-		this->epochs = epochs;
-		this->dropOutRate = dropOutRate;
-		this->regType = regType;
-		this->regLambda = regLambda;
-		this->lossType = lossType;
-		this->learningRate = learningRate;
-		this->resultsLoss.reserve(this->layers[sizeof(this->layers)-1]->outputs.size());
-		this->results.reserve(this->layers[sizeof(this->layers)-1]->outputs.size());
-		this->ZeroToOne = ZeroToOne;
-		this->bacthSize = bacthSize;
-	}
-
-Model::~Model()
-{
-	this->layers = nullptr;
-	this->datas = nullptr;
-}
-
-void init_my_module_Model(pybind11::module& m){
+void init_my_module_Modell(pybind11::module& m){
 	pybind11::class_<Model>(m,"Model")
-		.def(pybind11::init<Layer[],DataSet,bool,int16_t,float,RegFType,float,LossFType,float,bool,int16_t>())
+		.def(pybind11::init<vector<Layer*>,DataSet,bool,int,float,RegFType ,float,LossFType,float,bool,int>())
 		.def("trainModel",&Model::trainModel);
 }
+

@@ -7,28 +7,8 @@
 #include "Layer.hpp"
 #include <python3.10/Python.h>
 using namespace std;
-class Layer
-{
-public:
-	vector<float&> inputs;
-	vector<float> outputs;
-	vector<float> grads;
-	vector<float> outputsActiveted;
-	vector<float> weights;
-	vector<float> pastMomentum;
-	vector<float> pastVelocity;
-	LayerF func;
-	float in;
-	float out;
-	Layer(int in,int out, LayerF &&f);
-	~Layer();
-private:
-	random_device rd;
-	mt19937 gen;
-	normal_distribution<float> random_dist; 
-};
 
-Layer::Layer(int in, int out, LayerF&& f)
+Layer::Layer(int in, int out, LayerF f)
 {
 	this->inputs.reserve(in+1);
 	this->outputs.reserve(out);
@@ -55,8 +35,7 @@ Layer::~Layer()
 	this->weights.clear();
 	this->inputs.clear();
 }
-
 void init_my_module_Layer(pybind11::module& m){
 	pybind11::class_<Layer>(m,"Layer")
-		.def(pybind11::init<int, int, LayerF&&>());
+		.def(pybind11::init<int, int, LayerF>());
 }

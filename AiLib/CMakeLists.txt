@@ -12,7 +12,9 @@ SET(Open_BLAS_INCLUDE_SEARCH_PATHS
   /usr/include
   /usr/include/x86_64-linux-gnu
   /usr/lib/x86_64-linux-gnu
+  /usr/include/x86_64-linux-gnu/
   /usr/lib/x86_64-linux-gnu/openblas-pthread/
+  /usr/lib/x86_64-linux-gnu/openblas-pthread/cmake/openblas/
 )
 
 SET(Open_BLAS_LIB_SEARCH_PATHS
@@ -31,7 +33,9 @@ SET(Open_BLAS_LIB_SEARCH_PATHS
         /usr/lib
         /usr/include/x86_64-linux-gnu
         /usr/lib/x86_64-linux-gnu
+        /usr/include/x86_64-linux-gnu/
         /usr/lib/x86_64-linux-gnu/openblas-pthread/
+        /usr/lib/x86_64-linux-gnu/openblas-pthread/cmake/openblas/
  )
 
 
@@ -94,9 +98,14 @@ target_link_libraries(AIBoost PRIVATE Enums)
 target_link_libraries(AIBoost PRIVATE Layer)
 target_link_libraries (AIBoost PRIVATE Python3::Python)
 include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${OpenBLAS_INCLUDE_DIR})
 target_link_libraries(Model ${PYTHON_LIBRARIES})
+target_link_libraries(Model ${OpenBLAS_LIB})
 target_link_libraries(Layer ${PYTHON_LIBRARIES})
+target_link_libraries(Layer ${OpenBLAS_LIB})
 target_link_libraries(Enums ${PYTHON_LIBRARIES})
+target_link_libraries(Enums ${OpenBLAS_LIB})
 target_link_libraries(DataSet ${PYTHON_LIBRARIES})
+target_link_libraries(DataSet ${OpenBLAS_LIB})
 
 # Set C++ standard
