@@ -2,8 +2,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <vector>
-
+#include <pybind11/stl.h>
+#include "Layer.hpp"
 #include <python3.10/Python.h>
+namespace py = pybind11;
 using namespace std;
 enum LossFType
 {
@@ -42,4 +44,5 @@ struct EnumValue
 };
 
 vector<vector<float>> numpytoVector2D(pybind11::array_t<float> input_array);
-void init_my_module_Enumss(pybind11::module& m);
+vector<Layer*> vectorizeLayers(py::list py_list);
+void init_my_module_Enumss(py::module& m);

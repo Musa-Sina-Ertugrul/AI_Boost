@@ -3,7 +3,6 @@
 #include <pybind11/numpy.h>
 #include <vector>
 #include "Enums.hpp"
-
 #include <python3.10/Python.h>
 using namespace std;
 
@@ -57,6 +56,13 @@ vector<vector<float>> numpytoVector2D(pybind11::array_t<float> input_array){
 	}
 
 	return outputs;
+}
+vector<Layer*> vectorizeLayers(py::list py_list){
+	vector<Layer*> layers(py_list.size());
+	for(auto item : py_list){
+		layers.push_back(&Layer(item.cast<Layer>()));
+	}
+	return layers;
 }
 void init_my_module_Enumss(pybind11::module& m){
 	pybind11::class_<EnumValue>(m,"FTypes")

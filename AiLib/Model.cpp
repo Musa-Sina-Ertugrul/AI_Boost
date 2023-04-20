@@ -1,7 +1,4 @@
 #pragma once
-#include"Enums.hpp"
-#include"DataSet.hpp"
-#include"Layer.hpp"
 #include <vector>
 #include "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h"
 #include <cmath>
@@ -142,7 +139,7 @@ using namespace std;
 		}
 	}
 	float&& Model::activation(float& y) {
-		switch (this->layers[this->currentLayer]->func)
+		switch (this->layers[this->currentLayer]->function)
 		{
 		case Tanh:
 			return tanh(y);
@@ -165,7 +162,7 @@ using namespace std;
 		return 0.0;
 	}
 	float&& Model::dActivation(float& y) {
-		switch (this->layers[this->currentLayer]->func)
+		switch (this->layers[this->currentLayer]->function)
 		{
 		case Tanh:
 			return 1-(tanh(y)*tanh(y));

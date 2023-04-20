@@ -16,7 +16,7 @@ public:
 	vector<float> weights;
 	vector<float> pastMomentum;
 	vector<float> pastVelocity;
-	LayerF func;
+	LayerF function;
 	float in;
 	float out;
 	Layer(int in,int out, LayerF f);

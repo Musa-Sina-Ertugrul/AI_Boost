@@ -1,5 +1,4 @@
 #pragma once
-#include "Enums.hpp"
 #include <vector>
 #include <random>
 #include <cmath>
@@ -15,7 +14,7 @@ Layer::Layer(int in, int out, LayerF f)
 	this->grads.reserve(out);
 	this->outputsActiveted.reserve(out + 1);
 	this->weights.reserve(out * (in+1));
-	this->func = f;
+	this->function = f;
 	this->outputsActiveted[0] = 1;
 	this->in = in+1;
 	this->out = out;
