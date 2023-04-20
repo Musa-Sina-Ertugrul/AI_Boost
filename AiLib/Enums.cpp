@@ -19,14 +19,14 @@ using namespace std;
 	LossFType EnumValue::getL2Loss() {
 		return LossFType(L2Loss);
 	}
-	LayerF EnumValue::getTanh() {
-		return LayerF(Tanh);
+	LayerFunction EnumValue::getTanh() {
+		return LayerFunction(Tanh);
 	}
-	LayerF EnumValue::getSigmoid() {
-		return LayerF(Sigmoid);
+	LayerFunction EnumValue::getSigmoid() {
+		return LayerFunction(Sigmoid);
 	}
-	LayerF EnumValue::getRelu() {
-		return LayerF(Relu);
+	LayerFunction EnumValue::getRelu() {
+		return LayerFunction(Relu);
 	}
 	RegFType EnumValue::getRegNone() {
 		return RegFType(None);
@@ -57,13 +57,7 @@ vector<vector<float>> numpytoVector2D(pybind11::array_t<float> input_array){
 
 	return outputs;
 }
-vector<Layer*> vectorizeLayers(py::list py_list){
-	vector<Layer*> layers(py_list.size());
-	for(auto item : py_list){
-		layers.push_back(&Layer(item.cast<Layer>()));
-	}
-	return layers;
-}
+
 void init_my_module_Enumss(pybind11::module& m){
 	pybind11::class_<EnumValue>(m,"FTypes")
 		.def(pybind11::init<>())
@@ -82,10 +76,10 @@ void init_my_module_Enumss(pybind11::module& m){
 		.value("L1",RegFType::L1)
 		.value("L2",RegFType::L2)
 		.export_values();
-	pybind11::enum_<LayerF>(m,"LayerF")
-		.value("Tanh",LayerF::Tanh)
-		.value("Sigmoid",LayerF::Sigmoid)
-		.value("Relu",LayerF::Relu)
+	pybind11::enum_<LayerFunction>(m,"LayerFunction")
+		.value("Tanh",LayerFunction::Tanh)
+		.value("Sigmoid",LayerFunction::Sigmoid)
+		.value("Relu",LayerFunction::Relu)
 		.export_values();
 	pybind11::enum_<LossFType>(m,"LossFType")
 		.value("BCELoss",LossFType::BCELoss)

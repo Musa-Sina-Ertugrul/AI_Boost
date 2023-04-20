@@ -1,0 +1,7 @@
+setup.py
+AIBoost.egg-info/PKG-INFO
+AIBoost.egg-info/SOURCES.txt
+AIBoost.egg-info/dependency_links.txt
+AIBoost.egg-info/not-zip-safe
+AIBoost.egg-info/requires.txt
+AIBoost.egg-info/top_level.txt

@@ -3,7 +3,6 @@
 #include <pybind11/numpy.h>
 #include <vector>
 #include <pybind11/stl.h>
-#include "Layer.hpp"
 #include <python3.10/Python.h>
 namespace py = pybind11;
 using namespace std;
@@ -15,7 +14,7 @@ enum LossFType
 	L2Loss = 4
 };
 
-enum LayerF
+enum LayerFunction
 {
 	Tanh = 5,
 	Sigmoid = 6,
@@ -35,14 +34,13 @@ struct EnumValue
 	LossFType getCELoss();
 	LossFType getL1Loss();
 	LossFType getL2Loss();
-	LayerF getTanh();
-	LayerF getSigmoid();
-	LayerF getRelu();
+	LayerFunction getTanh();
+	LayerFunction getSigmoid();
+	LayerFunction getRelu();
 	RegFType getRegNone();
 	RegFType getRegL1();
 	RegFType getRegL2();
 };
 
 vector<vector<float>> numpytoVector2D(pybind11::array_t<float> input_array);
-vector<Layer*> vectorizeLayers(py::list py_list);
 void init_my_module_Enumss(py::module& m);

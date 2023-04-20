@@ -1,10 +1,15 @@
 #pragma once
+#include "DataSet.hpp"
+#include "Enums.hpp"
+#include "Layer.hpp"
+#include "Model.hpp"
+#include "DataSet.hpp"
 #include <vector>
 #include "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h"
 #include <cmath>
 #include <iostream>
 #include <pybind11/pybind11.h>
-#include "Model.hpp"
+
 #include <python3.10/Python.h>
 
 using namespace std;
@@ -24,6 +29,7 @@ using namespace std;
 		this->results.reserve(this->layers[this->layers.size()-1]->outputs.size());
 		this->ZeroToOne = ZeroToOne;
 		this->bacthSize = bacthSize;
+		this->regulazationNum = 0.0;
 	}
 	Model::~Model(){
 	for(int i = 0;i<this->layers.size();i++){
@@ -36,7 +42,7 @@ using namespace std;
 		float correct = 0.0;
 		float total = 0.0;
 		for(int i = 0;i<this->epochs;i++){
-			this->currentEpoch = i;
+			this->currentEpoch = i%sizeof(this->datas->outputs);
 			this->layers[0]->inputs[0]=1.0;
 			for(int j = 1;j<sizeof(this->datas->inputs[i])+1;j++){
 				this->layers[0]->inputs[j] = this->datas->inputs[i][j-1];
@@ -48,22 +54,22 @@ using namespace std;
 			}
 			if(ZeroToOne){
 				for(int j = 0;j<this->results.size();j++){
-					if(this->results[j]>0.5 && this->datas->outputs[i][j]>0.5){
+					if(this->results[j]>0.5 && this->datas->outputs[this->currentLayer][j]>0.5){
 						correct = correct + 1.0;
-					}else if(this->results[j]<0.5 && this->datas->outputs[i][j]<0.5){
+					}else if(this->results[j]<0.5 && this->datas->outputs[this->currentLayer][j]<0.5){
 						correct = correct + 1.0;
 					}
 					correct = correct / (float)this->results.size();
 				}
 			}else{
 				for(int j = 0;j<this->results.size();j++){
-					if(this->results[j]==this->datas->outputs[i][j]){
+					if(this->results[j]==this->datas->outputs[this->currentLayer][j]){
 						correct = correct + 1.0;
 					}
 					correct = correct / (float)this->results.size();
 				}
 			}
-			if(this->bacthSize == (i+1)%this->bacthSize){
+			if(this->bacthSize == (this->currentLayer+1)%this->bacthSize){
 				cout<<"error: "<<total/(this->resultsLoss.size()*this->bacthSize)<<"correctness: "<<correct/(float)this->bacthSize<<endl;
 				total = 0.0;
 				correct = 0.0;
@@ -104,6 +110,7 @@ using namespace std;
 	}
 	void Model::adam(){
 		int j = 0;
+		this->regulazationNum = this->reg();
 		for(int i = 0;i<this->layers[this->currentLayer]->weights.size();i++){
 			if(j == this->layers[this->currentLayer]->out){
 				j = 0;
@@ -114,7 +121,7 @@ using namespace std;
 			float mHat = this->layers[this->currentLayer]->pastMomentum[i]/(1-pow(0.9,this->currentEpoch+1));
 			float vHat = this->layers[this->currentLayer]->pastVelocity[i]/(1-pow(0.999,this->currentEpoch+1));
 			this->layers[this->currentLayer]->weights[i]=this->layers[this->currentLayer]->weights[i]-this->currentLR*mHat/(sqrt(vHat)+0.000001)
-			+this->regLambda*this->reg();
+			+this->regLambda*this->regulazationNum;
 			j++;
 		}
 	}
@@ -139,7 +146,7 @@ using namespace std;
 		}
 	}
 	float&& Model::activation(float& y) {
-		switch (this->layers[this->currentLayer]->function)
+		switch (this->layers[this->currentLayer]->F)
 		{
 		case Tanh:
 			return tanh(y);
@@ -162,7 +169,7 @@ using namespace std;
 		return 0.0;
 	}
 	float&& Model::dActivation(float& y) {
-		switch (this->layers[this->currentLayer]->function)
+		switch (this->layers[this->currentLayer]->getLayerF())
 		{
 		case Tanh:
 			return 1-(tanh(y)*tanh(y));

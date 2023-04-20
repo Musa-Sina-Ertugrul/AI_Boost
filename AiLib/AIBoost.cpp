@@ -1,7 +1,7 @@
-#include "Model.hpp"
 #include "Enums.hpp"
 #include "DataSet.hpp"
 #include "Layer.hpp"
+#include "Model.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 #include <python3.10/Python.h>

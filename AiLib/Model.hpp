@@ -1,7 +1,7 @@
 #pragma once
-#include"Enums.hpp"
-#include"DataSet.hpp"
-#include"Layer.hpp"
+#include "DataSet.hpp"
+#include "Enums.hpp"
+#include "Layer.hpp"
 #include <vector>
 #include "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h"
 #include <cmath>
@@ -10,7 +10,7 @@
 #include <python3.10/Python.h>
 
 using namespace std;
-
+class Layer;
 class Model
 {
 public:
@@ -25,7 +25,7 @@ public:
 	float learningRate;
 	bool ZeroToOne;
 	int bacthSize;
-	Model(vector<Layer*>layers,DataSet datas,bool boucingLR,int epochs,float dropOutRate,RegFType regType,float regLambda,
+	Model(vector<Layer*> layers,DataSet datas,bool boucingLR,int epochs,float dropOutRate,RegFType regType,float regLambda,
 	LossFType lossType,float learningRate,bool ZeroToOne,int bacthSize);
 	~Model();
 	void trainModel();
@@ -35,6 +35,7 @@ private:
 	int16_t currentLayer;
 	vector<float> resultsLoss;
 	vector<float> results;
+	float regulazationNum;
 	void backward();
 	void forward();
 	void adam();
