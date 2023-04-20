@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: AIBoost
+Version: 0.0.0
+Summary: AIBoost
+Home-page: UNKNOWN
+Author: Musa Sina Ertuğrul
+Author-email: m.s.ertugrul@gmail.com
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.7
+Provides-Extra: test
+Requires-Dist: pytest (>=6.0) ; extra == 'test'
+
+UNKNOWN
+
