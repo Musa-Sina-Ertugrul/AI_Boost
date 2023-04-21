@@ -127,7 +127,7 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="AIBoost",
-    version="0.0.1",
+    version="0.0.2",
     author="Musa Sina Ertuğrul",
     author_email="m.s.ertugrul@gmail.com",
     description="AIBoost",
