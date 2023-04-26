@@ -6,8 +6,9 @@
 #include "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h"
 #include <cmath>
 #include <iostream>
-#include <pybind11/pybind11.h>
 #include <python3.10/Python.h>
+#include <mutex>
+
 
 using namespace std;
 class Layer;
@@ -19,47 +20,50 @@ public:
 	LossFType lossType;
 	vector<Layer*> layers;
 	DataSet* datas;
-	float dropOutRate;
+	double dropOutRate;
 	RegFType regType;
-	float regLambda;
-	float learningRate;
+	double regLambda;
+	double learningRate;
 	bool ZeroToOne;
 	int bacthSize;
-	Model(vector<Layer*> layers,DataSet datas,bool boucingLR,int epochs,float dropOutRate,RegFType regType,float regLambda,
-	LossFType lossType,float learningRate,bool ZeroToOne,int bacthSize);
+	Model(vector<Layer*> layers,DataSet*,bool boucingLR,int epochs,double dropOutRate,RegFType regType,double regLambda,
+	LossFType lossType,double learningRate,bool ZeroToOne,int bacthSize,int layerNumber);
 	~Model();
 	void trainModel();
 private:
-	int currentEpoch;
-	float currentLR;
+	int layerNumber;
+	mutex mtx;
+	long currentEpoch;
+	double currentLR;
 	int16_t currentLayer;
-	vector<float> resultsLoss;
-	vector<float> results;
-	float regulazationNum;
+	vector<double> resultsLoss;
+	vector<double> results;
+	double regulazationNum;
 	void backward();
 	void forward();
 	void adam();
-	inline float&& currentGrad(int i,int j);
+	double currentGrad(int i,int j);
 	void gradient();
-	float&& activation(float& y);
-	inline float&& dRelu(float& x);
-	float&& dActivation(float& y);
-	inline float&& relu(float& x);
-	inline void cosBounce();
-	inline float&& bCELoss(float& yHat, float& y);
-	inline float&& cELoss(float& yHat, float& y);
-	inline float&& l1Loss(float& yHat, float& y);
-	inline float&& l2Loss(float& yHat, float& y);
-	float&& loss(float& yHat, float& input);
-	float&& dLoss(float& yHat,float& y);
-	inline float&& dBCELoss(float& yHat,float& y);
-	inline float&& dCELoss(float& yHat,float& y);
-	inline float&& dl1Loss(float& yHat,float& y);
-	inline float&& dl2Loss(float& yHat,float& y);
+	double activation(double y);
+	double dRelu(double x);
+	double dActivation(double y);
+	double relu(double x);
+	void softmax();
+	void cosBounce();
+	vector<vector<double>> transpose(const vector<vector<double>>& matrix);
+	vector<double> makeFlat(const vector<vector<double>>& matrix);
+	double bCELoss(double yHat, double y);
+	double cELoss(double yHat, double y);
+	double l1Loss(double yHat, double y);
+	double l2Loss(double yHat, double y);
+	double loss(double yHat, double input);
+	double dLoss(double yHat,double y);
+	double dBCELoss(double yHat,double y);
+	double dCELoss(double yHat,double y);
+	double dl1Loss(double yHat,double y);
+	double dl2Loss(double yHat,double y);
 	void bachNorm();
-	inline float&& l1Reg();
-	inline float&& l2Reg();
-	float&& reg();
+	double l1Reg();
+	double l2Reg();
+	double reg();
 };
-
-void init_my_module_Modell(pybind11::module& m);

@@ -1,4 +1,5 @@
 #pragma once
+#include <python3.10/Python.h>
 #include "DataSet.hpp"
 #include "Enums.hpp"
 #include "Layer.hpp"
@@ -8,16 +9,15 @@
 #include "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h"
 #include <cmath>
 #include <iostream>
-#include <pybind11/pybind11.h>
+#include <iomanip>
 
-#include <python3.10/Python.h>
 
 using namespace std;
 
-	Model::Model(vector<Layer*>layers,DataSet datas,bool boucingLR,int epochs,float dropOutRate,RegFType regType,float regLambda,
-	LossFType lossType,float learningRate,bool ZeroToOne,int bacthSize){
+	Model::Model(vector<Layer*> layers,DataSet* datas,bool boucingLR,int epochs,double dropOutRate,RegFType regType,double regLambda,
+	LossFType lossType,double learningRate,bool ZeroToOne,int bacthSize,int layerNumber){
 		this->layers = layers;
-		this->datas = &datas;
+		this->datas = datas;
 		this->boucingLR = boucingLR;
 		this->epochs = epochs;
 		this->dropOutRate = dropOutRate;
@@ -25,57 +25,57 @@ using namespace std;
 		this->regLambda = regLambda;
 		this->lossType = lossType;
 		this->learningRate = learningRate;
-		this->resultsLoss.reserve(this->layers[this->layers.size()-1]->outputs.size());
-		this->results.reserve(this->layers[this->layers.size()-1]->outputs.size());
+		this->resultsLoss = vector<double>((int)this->layers[layerNumber-1]->out);
+		this->results = vector<double>((int)this->layers[layerNumber-1]->out);
 		this->ZeroToOne = ZeroToOne;
 		this->bacthSize = bacthSize;
 		this->regulazationNum = 0.0;
+		this->layerNumber=layerNumber;
 	}
 	Model::~Model(){
-	for(int i = 0;i<this->layers.size();i++){
-		delete this->layers[i];
-	}
 	this->layers.clear();
 	this->datas = nullptr;
 }
 	void Model::trainModel(){
-		float correct = 0.0;
-		float total = 0.0;
+
+		double correct = 0.0;
+		double total = 0.0;
 		for(int i = 0;i<this->epochs;i++){
-			this->currentEpoch = i%sizeof(this->datas->outputs);
-			this->layers[0]->inputs[0]=1.0;
-			for(int j = 1;j<sizeof(this->datas->inputs[i])+1;j++){
-				this->layers[0]->inputs[j] = this->datas->inputs[i][j-1];
+			this->currentEpoch = i%(this->datas->row1);
+			this->layers.at(0)->inputs.at(0)=0.001;
+			for(int j = 0;j<this->datas->col1;j++){
+				this->layers[0]->inputs[j+1] = this->datas->inputs.at(this->currentEpoch).at(j);
 			}
 			this->forward();
-			
-			for(int j = 0;j<this->resultsLoss.size();j++){
-				total = total + this->resultsLoss[j];
-			}
 			if(ZeroToOne){
-				for(int j = 0;j<this->results.size();j++){
-					if(this->results[j]>0.5 && this->datas->outputs[this->currentLayer][j]>0.5){
+				for(int j = 0;j<this->datas->col2;j++){
+					
+					cout<<"result size "<<this->results.at(j)<<" ouputs size "<<this->datas->outputs.at(this->currentEpoch).at(j)<<endl;
+					if(this->results.at(j)>0.5 && this->datas->outputs.at(this->currentEpoch).at(j)>0.5){
 						correct = correct + 1.0;
-					}else if(this->results[j]<0.5 && this->datas->outputs[this->currentLayer][j]<0.5){
+					}else if (this->results.at(j)<0.5 && this->datas->outputs.at(this->currentEpoch).at(j)<0.5)
+					{
 						correct = correct + 1.0;
 					}
-					correct = correct / (float)this->results.size();
 				}
+				correct /= (double)this->datas->col2+1.0;
 			}else{
-				for(int j = 0;j<this->results.size();j++){
-					if(this->results[j]==this->datas->outputs[this->currentLayer][j]){
+				for(int j = 0;j<this->layers[this->layerNumber-1]->out;j++){
+					if(this->results[j]==this->datas->outputs[this->currentEpoch][j]){
 						correct = correct + 1.0;
 					}
-					correct = correct / (float)this->results.size();
 				}
+				correct /= (double)this->datas->col2+1.0;
 			}
-			if(this->bacthSize == (this->currentLayer+1)%this->bacthSize){
-				cout<<"error: "<<total/(this->resultsLoss.size()*this->bacthSize)<<"correctness: "<<correct/(float)this->bacthSize<<endl;
+			if(0 == (this->currentEpoch+1)%this->bacthSize){
+				cout<<fixed<<setprecision(6)<<"correctness: "<<correct*100.0<<endl;
 				total = 0.0;
 				correct = 0.0;
 			}
 			this->backward();
+
 		}
+		return;
 	}
 	void Model::backward(){
 		for(int i = this->currentLayer;i>-1;i--){
@@ -88,22 +88,26 @@ using namespace std;
 		}
 	}
 	void Model::forward(){
-		for(int i = 0;i<sizeof(this->layers);i++){
+		for(int i = 0;i<this->layerNumber;i++){
 			this->currentLayer = i;
 			this->bachNorm();
-			cblas_sgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[i]->out,this->layers[i]->in,1.0f,this->layers[i]->inputs.data(),this->layers[i]->in,
+			cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[i]->out,this->layers[i]->in,1.0,this->layers[i]->inputs.data(),this->layers[i]->in,
 			this->layers[i]->weights.data(),this->layers[i]->out,0.0f,this->layers[i]->outputs.data(),this->layers[i]->out);
-			for(int j = 1;j<sizeof(this->layers[i]->outputsActiveted);j++){
-				this->layers[i]->outputsActiveted[j]=this->activation(this->layers[i]->outputs[i-1]);
-			}
-			if(sizeof(this->layers)-1 != i){
-				for(int j = 0;j<this->layers[i]->outputsActiveted.size();j++){
-					this->layers[i+1]->inputs[j] = this->layers[i]->outputsActiveted[j];
+			if(this->layers[this->currentLayer]->F!=SoftMax){
+				for(int j = 1;j<(int)this->layers[i]->out+1;j++){
+					this->layers.at(i)->outputsActiveted.at(j)=this->activation(this->layers.at(i)->outputs.at(j-1));
 				}
 			}else{
-				for(int j = 1;j<this->layers[i]->outputsActiveted.size();j++){
-					this->resultsLoss[j-1]= this->loss(this->datas->outputs[this->currentEpoch][j-1],this->layers[i]->outputsActiveted[j]);
-					this->results[j-1]=this->layers[i]->outputsActiveted[j];
+				this->softmax();
+			}
+			this->layers.at(i)->outputsActiveted.at(0) = 1.0;
+			if(this->layerNumber-1 != i){
+				for(int j = 0;j<this->layers.at(i)->out+1;j++){
+					this->layers.at(i+1)->inputs.at(j) = this->layers.at(i)->outputsActiveted.at(j);
+				}
+			}else{
+				for(int j = 0;j<this->datas->col2;j++){
+					this->results[j] = this->layers[this->layerNumber-1]->outputsActiveted[j+1];
 				}
 			}
 		}
@@ -111,41 +115,90 @@ using namespace std;
 	void Model::adam(){
 		int j = 0;
 		this->regulazationNum = this->reg();
-		for(int i = 0;i<this->layers[this->currentLayer]->weights.size();i++){
+		for(int i = 0;i<this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in;i++){
 			if(j == this->layers[this->currentLayer]->out){
 				j = 0;
 			}
-			float tmpGrad = this->currentGrad(i,j);
+			double tmpGrad = this->currentGrad(i,j);
+			if((tmpGrad<0.001&&tmpGrad>-0.001)||isnan(tmpGrad)){
+				if(tmpGrad>0){
+					tmpGrad = 0.001;
+				}else{
+					tmpGrad = -0.001;
+				}
+				
+			}
 			this->layers[this->currentLayer]->pastMomentum[i]= 0.9*this->layers[this->currentLayer]->pastMomentum[i] + (0.1*tmpGrad);
 			this->layers[this->currentLayer]->pastVelocity[i] = 0.999*this->layers[this->currentLayer]->pastVelocity[i] + (0.001*tmpGrad*tmpGrad);
-			float mHat = this->layers[this->currentLayer]->pastMomentum[i]/(1-pow(0.9,this->currentEpoch+1));
-			float vHat = this->layers[this->currentLayer]->pastVelocity[i]/(1-pow(0.999,this->currentEpoch+1));
-			this->layers[this->currentLayer]->weights[i]=this->layers[this->currentLayer]->weights[i]-this->currentLR*mHat/(sqrt(vHat)+0.000001)
+			double mHat = this->layers[this->currentLayer]->pastMomentum[i]/(1-pow(0.9,this->currentEpoch+1));
+			double vHat = this->layers[this->currentLayer]->pastVelocity[i]/(1-pow(0.999,this->currentEpoch+1));
+			double pastWeight = this->layers[this->currentLayer]->weights[i];
+			this->layers[this->currentLayer]->weights[i]=this->layers[this->currentLayer]->weights[i]-this->currentLR*mHat/(sqrt(abs(vHat))+0.000001)
 			+this->regLambda*this->regulazationNum;
 			j++;
+			if((this->layers[this->currentLayer]->weights[i]<0.001&&this->layers[this->currentLayer]->weights[i]>-0.001)
+			||isnan(this->layers[this->currentLayer]->weights[i])){
+				this->layers[this->currentLayer]->weights[i] = this->layers[this->currentLayer]->random_dist(this->layers[this->currentLayer]->gen);
+				
+			}
 		}
 	}
-	inline float&& Model::currentGrad(int i,int j){
+	inline double Model::currentGrad(int i,int j){
 		return this->layers[this->currentLayer]->weights[i] *this->layers[this->currentLayer]->grads[j];
 	}
 	void Model::gradient(){
-		if(sizeof(this->layers)-1 == this->currentLayer){
-			for(int j = 1;j<this->layers[this->currentLayer]->outputsActiveted.size();j++){
-				this->layers[this->currentLayer]->grads[j-1]=this->dLoss(this->datas->outputs[this->currentEpoch][j-1],this->layers[this->currentLayer]->outputsActiveted[j])
-				*this->dActivation(this->layers[this->currentLayer]->outputs[j-1]);
+		if(this->layerNumber-1 == this->currentLayer){
+			if(this->layers[this->currentLayer]->F != SoftMax){
+				for(int j = 1;j<this->layers[this->currentLayer]->out+1;j++){
+					this->layers[this->currentLayer]->grads[j-1]=this->dLoss(this->datas->outputs[this->currentEpoch][j-1],this->layers[this->currentLayer]->outputsActiveted[j])
+					*this->dActivation(this->layers[this->currentLayer]->outputs[j-1]);
+				}
+				return;
 			}
+			vector<vector<double>> jacobian(this->datas->col2,vector<double>(this->datas->col2,0.0));
+			for(int i = 0;i<this->datas->col2;i++){
+				for(int j = 0;j<this->datas->col2;j++){
+					int ij = i==j ? 1.0: 0.0;
+					jacobian[i][j] = this->layers[this->layerNumber-1]->outputsActiveted[i] *(ij - this->layers[this->layerNumber-1]->outputsActiveted[j]);
+				}
+			}
+			vector<vector<double>> jacobianTrans = this->transpose(jacobian);
+			vector<double> jacobianTransFlat = makeFlat(jacobianTrans);
+			cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,this->datas->col2,1,this->datas->col2,1.0,jacobianTransFlat.data(),this->datas->col2,this->layers[this->layerNumber-1]->outputsActiveted.data(),
+			1,0.0,this->layers[this->layerNumber-1]->grads.data(),this->datas->col2);
 			return;
 		}
-		float total = 0.0;
-		for(int i = 0;i<this->layers[this->currentLayer+1]->grads.size();i++){
+		double total = 0.0;
+		for(int i = 0;i<(int)this->layers[this->currentLayer+1]->out;i++){
 			total = total + this->layers[this->currentLayer+1]->grads[i];
 		}
-		for(int i = 1;i<this->layers[this->currentLayer]->outputsActiveted.size();i++){
+		for(int i = 1;i<(int)this->layers[this->currentLayer]->out+1;i++){
 			this->layers[this->currentLayer]->grads[i-1]= total* this->layers[this->currentLayer]->outputsActiveted[i]
 			*this->dActivation(this->layers[this->currentLayer]->outputs[i-1]);
 		}
 	}
-	float&& Model::activation(float& y) {
+	vector<double> Model::makeFlat(const vector<vector<double>>& matrix){
+
+		vector<double> tmp(this->datas->col2*this->datas->col2);
+		for(int i = 0;i<this->datas->col2*this->datas->col2;i++){
+			tmp[i] = matrix[i/this->datas->col2][i%this->datas->col2];
+		}
+		return tmp;
+	}
+	vector<vector<double>> Model::transpose(const vector<vector<double>>& matrix) {
+		int rows = matrix.size();
+		int cols = matrix[0].size();
+		vector<vector<double>> transposed_matrix(cols, vector<double>(rows));
+
+		for (int i = 0; i < rows; ++i) {
+			for (int j = 0; j < cols; ++j) {
+				transposed_matrix[j][i] = matrix[i][j];
+			}
+		}
+
+    return transposed_matrix;
+}
+	double Model::activation(double y) {
 		switch (this->layers[this->currentLayer]->F)
 		{
 		case Tanh:
@@ -162,14 +215,23 @@ using namespace std;
 			break;
 		}
 	}
-	inline float&& Model::dRelu(float& x) {
+	void Model::softmax(){
+		double total = 0.0000000;
+		for(int i = 0;i<this->layers[this->currentLayer]->out;i++){
+			total += exp(this->layers[this->currentLayer]->outputs[i]);
+		}
+		for(int i = 0;i<this->layers[this->currentLayer]->out;i++){
+			this->layers[this->currentLayer]->outputsActiveted[i+1]=exp(this->layers[this->currentLayer]->outputs[i])/total;
+		}
+	}
+	inline double Model::dRelu(double x) {
 		if (x > 0.0) {
 			return 1.0;
 		}
 		return 0.0;
 	}
-	float&& Model::dActivation(float& y) {
-		switch (this->layers[this->currentLayer]->getLayerF())
+	double Model::dActivation(double y) {
+		switch (this->layers[this->currentLayer]->F)
 		{
 		case Tanh:
 			return 1-(tanh(y)*tanh(y));
@@ -185,28 +247,28 @@ using namespace std;
 			break;
 		}
 	}
-	inline float&& Model::relu(float& x) {
+	double Model::relu(double x) {
 		if (x > 0.0) {
-			return float(x);
+			return double(x);
 		}
 		return 0.0;
 	}
-	inline void Model::cosBounce() {
+	void Model::cosBounce() {
 		this->currentLR = cos(this->learningRate * this->currentEpoch);
 	}
-	inline float&& Model::bCELoss(float& yHat, float& y) {
+	double Model::bCELoss(double yHat, double y) {
 		return -(yHat * log(y) + (1 - yHat * (1 - log(1 - y))));
 	}
-	inline float&& Model::cELoss(float& yHat, float& y) {
-		return yHat * log(y);
+	double Model::cELoss(double yHat, double y) {
+		return -yHat * log(y);
 	}
-	inline float&& Model::l1Loss(float& yHat, float& y) {
+	double Model::l1Loss(double yHat, double y) {
 		return abs(yHat - y);
 	}
-	inline float&& Model::l2Loss(float& yHat, float& y) {
+	double Model::l2Loss(double yHat, double y) {
 		return (yHat - y)* (yHat - y);
 	}
-	float&& Model::loss(float& yHat, float& input) {
+	double Model::loss(double yHat, double input) {
 		switch (this->lossType)
 		{
 		case BCELoss:
@@ -226,7 +288,7 @@ using namespace std;
 			break;
 		}
 	}
-	float&& Model::dLoss(float& yHat,float& y) {
+	double Model::dLoss(double yHat,double y) {
 		switch (this->lossType)
 		{
 		case BCELoss:
@@ -246,13 +308,13 @@ using namespace std;
 			break;
 		}
 	}
-	inline float&& Model::dBCELoss(float& yHat,float& y) {
-		return -(yHat / y - (1 - yHat) / (1 - y));
+	inline double Model::dBCELoss(double yHat,double y) {
+		return -((yHat / (y)) - (1 - yHat) / (1 - y));
 	}
-	inline float&& Model::dCELoss(float& yHat,float& y) {
-		return -((yHat / y) - ((1 - yHat) / (1 - y)));
+	inline double Model::dCELoss(double yHat,double y) {
+		return yHat/y;
 	}
-	inline float&& Model::dl1Loss(float& yHat,float& y) {
+	inline double Model::dl1Loss(double yHat,double y) {
 		if (y > yHat) {
 			return 1.0;
 		}
@@ -261,41 +323,41 @@ using namespace std;
 		}
 		return 0.0;
 	}
-	inline float&& Model::dl2Loss(float& yHat,float& y) {
+	inline double Model::dl2Loss(double yHat,double y) {
 		return -(yHat - y);
 	}
 	void Model::bachNorm() {
-		float total = 0.000000;
-		int len = sizeof(this->layers[this->currentLayer]->inputs);
+		double total = 0.000000;
+		int len = (int)this->layers[this->currentLayer]->in;
 		for (int i = 0; i < len;i++ ) {
 			total += this->layers[this->currentLayer]->inputs[i];
 		}
 		total = total/len;
-		float meansqr = 0.000000;
+		double meansqr = 0.000000;
 		for (int i = 0; i < len; i++) {
-			meansqr += (this->layers[this->currentLayer]->inputs[i] - total)* (this->layers[this->currentLayer]->inputs[i] - total);
+			meansqr += abs((this->layers[this->currentLayer]->inputs[i] - total)* (this->layers[this->currentLayer]->inputs[i] - total));
 		}
-		float std = sqrt(meansqr / (len - 1));
+		double std = sqrt(abs(meansqr) / (len - 1));
 		for (int i = 0; i < len; i++) {
-			this->layers[this->currentLayer]->inputs[i] = (this->layers[this->currentLayer]->inputs[i]-total)/std;
+			this->layers[this->currentLayer]->inputs[i] = (this->layers[this->currentLayer]->inputs[i]-total)/(std+ 0.000001);
 		}
 
 	}
-	inline float&& Model::l1Reg() {
-		float total(0.000000);
-		for (int i = 0; i < this->layers[this->currentLayer]->weights.size(); i++) {
+	inline double Model::l1Reg() {
+		double total(0.000000);
+		for (int i = 0; i < this->layers[this->currentLayer]->in*this->layers[this->currentLayer]->out; i++) {
 			total += abs(this->layers[this->currentLayer]->weights[i]);
 		}
-		return this->regLambda*total;
+		return this->regLambda*total+0.00000001;
 	}
-	inline float&& Model::l2Reg() {
-		float total(0.000000);
-		for (int i = 0; i < this->layers[this->currentLayer]->weights.size(); i++) {
+	inline double Model::l2Reg() {
+		double total(0.000000);
+		for (int i = 0; i <this->layers[this->currentLayer]->in*this->layers[this->currentLayer]->out; i++) {
 			total += this->layers[this->currentLayer]->weights[i]*this->layers[this->currentLayer]->weights[i];
 		}
-		return this->regLambda * total;
+		return this->regLambda * total+0.00000001;
 	}
-	float&& Model::reg() {
+	double Model::reg() {
 		switch (this->regType)
 		{
 		case None:
@@ -312,10 +374,4 @@ using namespace std;
 			break;
 		}
 	}
-
-void init_my_module_Modell(pybind11::module& m){
-	pybind11::class_<Model>(m,"Model")
-		.def(pybind11::init<vector<Layer*>,DataSet,bool,int,float,RegFType ,float,LossFType,float,bool,int>())
-		.def("trainModel",&Model::trainModel);
-}
 

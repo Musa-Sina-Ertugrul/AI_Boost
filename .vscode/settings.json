@@ -70,7 +70,13 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "model.hpp": "cpp",
+        "dataset.hpp": "cpp",
+        "enums.hpp": "cpp",
+        "layer.hpp": "cpp",
+        "eigen3": "cpp",
+        "core": "c"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/AiLib",
     "C_Cpp.errorSquiggles": "Enabled"

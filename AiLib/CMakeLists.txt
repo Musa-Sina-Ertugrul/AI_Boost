@@ -86,19 +86,30 @@ set_target_properties(DataSet PROPERTIES POSITION_INDEPENDENT_CODE ON)
 find_package (Python3 REQUIRED Interpreter Development)
 # Find Pybind11
 find_package(PythonLibs REQUIRED)
-find_package(pybind11 REQUIRED)
 find_package(BLAS REQUIRED)
+find_package(SWIG REQUIRED)
+
+
+
+include(UseSWIG)
+include(${SWIG_USE_FILE})
+set(SWIG_INTERFACE_FILE AIBoost.i)
+set(SOURCE_FILES AIBoost.cpp)
+
+set_source_files_properties(AIBoost.i PROPERTIES CPLUSPLUS ON)
+swig_add_library(AIBoost LANGUAGE python SOURCES ${SWIG_INTERFACE_FILE} ${SOURCE_FILES})
+swig_link_libraries(AIBoost ${PYTHON_LIBRARIES})
+swig_link_libraries(AIBoost ${OpenBLAS_LIB})
+swig_link_libraries(AIBoost Model)
+swig_link_libraries(AIBoost Layer)
+swig_link_libraries(AIBoost Enums)
+swig_link_libraries(AIBoost DataSet)
 # Create a Pybind11 module
-pybind11_add_module(AIBoost AIBoost.cpp)
 # Link OpenBLAS to the Pybind11 module
-target_link_libraries(AIBoost PRIVATE OpenBLAS)
-target_link_libraries(AIBoost PRIVATE Model)
-target_link_libraries(AIBoost PRIVATE DataSet)
-target_link_libraries(AIBoost PRIVATE Enums)
-target_link_libraries(AIBoost PRIVATE Layer)
-target_link_libraries (AIBoost PRIVATE Python3::Python)
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${OpenBLAS_INCLUDE_DIR})
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 target_link_libraries(Model ${PYTHON_LIBRARIES})
 target_link_libraries(Model ${OpenBLAS_LIB})
 target_link_libraries(Layer ${PYTHON_LIBRARIES})
@@ -108,4 +119,13 @@ target_link_libraries(Enums ${OpenBLAS_LIB})
 target_link_libraries(DataSet ${PYTHON_LIBRARIES})
 target_link_libraries(DataSet ${OpenBLAS_LIB})
 
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+install(TARGETS AIBoost LIBRARY DESTINATION /home/musasina/Desktop/AI_Boost/AiLib/build ARCHIVE DESTINATION /home/musasina/Desktop/AI_Boost/AiLib/build)
+
+
 # Set C++ standard
+

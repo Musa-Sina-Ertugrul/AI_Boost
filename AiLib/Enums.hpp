@@ -1,10 +1,8 @@
 #pragma once
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+
 #include <vector>
-#include <pybind11/stl.h>
+
 #include <python3.10/Python.h>
-namespace py = pybind11;
 using namespace std;
 enum LossFType
 {
@@ -16,31 +14,15 @@ enum LossFType
 
 enum LayerFunction
 {
-	Tanh = 5,
-	Sigmoid = 6,
-	Relu = 7
+	SoftMax = 5,
+	Tanh = 6,
+	Sigmoid = 7,
+	Relu = 8
 };
 
 enum RegFType
 {
-	None = 8,
-	L1 = 9,
-	L2 = 10
+	None = 9,
+	L1 = 10,
+	L2 = 11
 };
-
-struct EnumValue
-{
-	LossFType getBCELoss();
-	LossFType getCELoss();
-	LossFType getL1Loss();
-	LossFType getL2Loss();
-	LayerFunction getTanh();
-	LayerFunction getSigmoid();
-	LayerFunction getRelu();
-	RegFType getRegNone();
-	RegFType getRegL1();
-	RegFType getRegL2();
-};
-
-vector<vector<float>> numpytoVector2D(pybind11::array_t<float> input_array);
-void init_my_module_Enumss(py::module& m);

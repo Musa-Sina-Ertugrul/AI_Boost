@@ -1,28 +1,35 @@
 
 #pragma once
 #include <vector>
-#include <pybind11/pybind11.h>
 #include "DataSet.hpp"
 #include <python3.10/Python.h>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+
 using namespace std;
 
-DataSet::DataSet(vector<vector<float>> inputs, vector<vector<float>> outputs) {
-			this->inputs = inputs;
-			this->outputs = outputs;
+DataSet::DataSet(vector<vector<double>>& inputs,vector<vector<double>>& outputs,int row1,int col1,int row2, int col2) {
+	this->inputs = inputs;
+    this->outputs = outputs;
+    this->col1 = col1;
+    this->col2 = col2;
+    this->row1 = row1;
+    this->row2 = row2;
 }
+DataSet& DataSet::operator=(const DataSet& other) {
+        if (this == &other) {
+            return *this;
+        }
 
+        // Assign other members as needed
+        // Note: id_ is not assigned since it's a const member
+
+        return *this;
+    }
 DataSet::~DataSet() {
-			for (int i = 0; i < this->inputs.size(); i++) {
-				this->inputs[i].clear();
-			}
-			this->inputs.clear();
-			for (int i = 0; i < this->outputs.size(); i++) {
-				this->outputs[i].clear();
-			}
-			this->outputs.clear();
+
 		}
 
-void init_my_module_DataSet(pybind11::module& m){
-	pybind11::class_<DataSet>(m,"DataSet")
-		.def(pybind11::init<vector<vector<float>>, vector<vector<float>>>());
-}
+

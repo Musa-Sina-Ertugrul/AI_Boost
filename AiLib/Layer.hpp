@@ -3,29 +3,28 @@
 #include <vector>
 #include <random>
 #include <cmath>
-#include <pybind11/pybind11.h>
 #include <python3.10/Python.h>
+
 using namespace std;
 class Layer
 {
 public:
-	vector<float> inputs;
-	vector<float> outputs;
-	vector<float> grads;
-	vector<float> outputsActiveted;
-	vector<float> weights;
-	vector<float> pastMomentum;
-	vector<float> pastVelocity;
+	vector<double> inputs;
+	vector<double> outputs;
+	vector<double> grads;
+	vector<double> outputsActiveted;
+	vector<double> weights;
+	vector<double> pastMomentum;
+	vector<double> pastVelocity;
 	LayerFunction F;
-	float in;
-	float out;
-	Layer(int in,int out, LayerFunction f);
-	~Layer();
-	LayerFunction&& getLayerF();
-private:
-	random_device rd;
+	normal_distribution<double> random_dist;
 	mt19937 gen;
-	normal_distribution<float> random_dist; 
+	double in;
+	double out;
+	Layer(int in,int out, LayerFunction f);
+	Layer(Layer &object);
+	~Layer();
+	Layer& operator=(const Layer& other);
+
 };
-vector<Layer*> vectorizeLayers(py::list py_list);
-void init_my_module_Layer(pybind11::module& m);
+
