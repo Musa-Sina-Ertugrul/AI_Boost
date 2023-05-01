@@ -14,7 +14,6 @@ Layer::Layer(int in, int out, LayerFunction f)
 {
 	this->inputs = vector<double>(in+1);
 	this->outputs= vector<double>(out);
-	this->grads= vector<double>(out);
 	this->outputsActiveted= vector<double>(out + 1);
 	this->weights= vector<double>(out * (in+1));
 	this->F = f;
@@ -23,9 +22,11 @@ Layer::Layer(int in, int out, LayerFunction f)
 	this->out = out;
 	this->pastMomentum = vector<double>(out*this->in,0.0);
 	this->pastVelocity = vector<double>(out*this->in,0.0);
+	this->grads= vector<double>(in,0.0);
+	this->errorWeights = vector<double>(out*this->in,0.0);
 	this->gen = mt19937(random_device{}());
 	double std = sqrt(2.000000/(this->in+this->out));
-	this->random_dist = normal_distribution<double>(0,std);
+	this->random_dist = normal_distribution<double>(0.0,std);
 	for(int i = 0;i<out*this->in;i++){
 		this->weights[i]=this->random_dist(gen);
 	}

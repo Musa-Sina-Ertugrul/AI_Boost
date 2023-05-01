@@ -31,8 +31,9 @@ public:
 	~Model();
 	void trainModel();
 private:
+	int currentBatch;
 	int layerNumber;
-	mutex mtx;
+	normal_distribution<double> normal_rand;
 	long currentEpoch;
 	double currentLR;
 	int16_t currentLayer;

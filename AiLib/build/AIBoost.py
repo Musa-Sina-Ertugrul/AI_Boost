@@ -478,6 +478,7 @@ class Layer(object):
     weights = property(_AIBoost.Layer_weights_get, _AIBoost.Layer_weights_set)
     pastMomentum = property(_AIBoost.Layer_pastMomentum_get, _AIBoost.Layer_pastMomentum_set)
     pastVelocity = property(_AIBoost.Layer_pastVelocity_get, _AIBoost.Layer_pastVelocity_set)
+    errorWeights = property(_AIBoost.Layer_errorWeights_get, _AIBoost.Layer_errorWeights_set)
     F = property(_AIBoost.Layer_F_get, _AIBoost.Layer_F_set)
     random_dist = property(_AIBoost.Layer_random_dist_get, _AIBoost.Layer_random_dist_set)
     gen = property(_AIBoost.Layer_gen_get, _AIBoost.Layer_gen_set)

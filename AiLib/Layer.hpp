@@ -16,11 +16,12 @@ public:
 	vector<double> weights;
 	vector<double> pastMomentum;
 	vector<double> pastVelocity;
+	vector<double> errorWeights;
 	LayerFunction F;
 	normal_distribution<double> random_dist;
 	mt19937 gen;
-	double in;
-	double out;
+	int in;
+	int out;
 	Layer(int in,int out, LayerFunction f);
 	Layer(Layer &object);
 	~Layer();
