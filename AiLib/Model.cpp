@@ -33,6 +33,9 @@ using namespace std;
 		this->layerNumber=layerNumber;
 		this->currentBatch = 1;
 		this->normal_rand = normal_distribution<double>(0.0,0.001);
+		this->currentLayer=0;
+		this->currentEpoch=0;
+		this->currentBatch=0;
 	}
 	Model::~Model(){
 	this->layers.clear();
@@ -364,7 +367,7 @@ using namespace std;
 		}
 	}
 	inline double Model::dBCELoss(double yHat,double y) {
-		return -((yHat / (y)) - (1 - yHat) / (1 - y));
+		return -((yHat / (y+0.00000001)) - (1 - yHat) / ((1 - y)));
 	}
 	inline double Model::dCELoss(double yHat,double y) {
 		return yHat/(y+0.00000001);
