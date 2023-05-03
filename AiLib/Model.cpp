@@ -46,17 +46,18 @@ using namespace std;
 		double correct = 0.0;
 		double total = 0.0;
 		for(int i = 0;i<this->epochs;i++){
-			this->currentEpoch = i%(this->datas->row1);
-			this->layers.at(0)->inputs.at(0)=0.001;
+			this->currentEpoch = i%this->datas->row1;
+			//this->layers.at(0)->inputs.at(0)=0.001;
 			for(int j = 0;j<this->datas->col1;j++){
-				this->layers[0]->inputs[j+1] = this->datas->inputs.at(this->currentEpoch).at(j);
+				this->layers[0]->inputs[j] = this->datas->inputs.at(this->currentEpoch).at(j);
 			}
 			this->bachNorm();
 			this->forward();
 			if(ZeroToOne){
 				for(int j = 0;j<this->datas->col2;j++){
 					
-					//cout<<"result size "<<this->results.at(j)<<" ouputs size "<<this->datas->outputs.at(this->currentEpoch).at(j)<<endl;
+					//cout<<"result size "<<this->results.at(j)<<endl;
+					//cout<<" ouputs size "<<this->datas->outputs.at(this->currentEpoch).at(j)<<endl;
 					if(this->results.at(j)>0.5 && this->datas->outputs.at(this->currentEpoch).at(j)>0.5){
 						correct = correct + 1.0;
 					}else if (this->results.at(j)<0.5 && this->datas->outputs.at(this->currentEpoch).at(j)<0.5)
@@ -100,9 +101,12 @@ using namespace std;
 			
 			cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[i]->out,this->layers[i]->in,1.0,this->layers[i]->inputs.data(),this->layers[i]->in,
 			this->layers[i]->weights.data(),this->layers[i]->out,0.0,this->layers[i]->outputs.data(),this->layers[i]->out);
+			for(int j = 0;j<this->layers[i]->out;j++){
+				this->layers.at(i)->outputs.at(j) = this->layers.at(i)->outputs.at(j) + this->layers.at(i)->bias.at(j);
+			}
 			if(this->layers[this->currentLayer]->F!=SoftMax){
-				for(int j = 1;j<(int)this->layers[i]->out+1;j++){
-					this->layers.at(i)->outputsActiveted.at(j)=this->activation(this->layers.at(i)->outputs.at(j-1));
+				for(int j = 0;j<(int)this->layers[i]->out;j++){
+					this->layers.at(i)->outputsActiveted.at(j)=this->activation(this->layers.at(i)->outputs.at(j));
 					/*if(isnanf(this->layers.at(i)->outputsActiveted.at(j))){
 						this->layers.at(i)->outputsActiveted.at(j)=this->normal_rand(this->layers[this->currentLayer]->gen);
 					}*/
@@ -112,7 +116,7 @@ using namespace std;
 			}
 			this->layers.at(i)->outputsActiveted.at(0) = 0.001;
 			if(this->layerNumber-1 != i){
-				for(int j = 0;j<this->layers.at(i)->out+1;j++){
+				for(int j = 0;j<this->layers.at(i)->out;j++){
 					/*if(isnanf(layers.at(i)->outputsActiveted.at(j))){
 						layers.at(i)->outputsActiveted.at(j) = this->normal_rand(this->layers[this->currentLayer]->gen);
 					}*/
@@ -123,7 +127,7 @@ using namespace std;
 					/*if(isnanf(this->layers[this->layerNumber-1]->outputsActiveted[j+1])){
 						this->layers[this->layerNumber-1]->outputsActiveted[j+1] = this->normal_rand(this->layers[this->currentLayer]->gen);
 					}*/
-					this->results[j] = this->layers[this->layerNumber-1]->outputsActiveted[j+1];
+					this->results[j] = this->layers[this->layerNumber-1]->outputsActiveted[j];
 				}
 			}
 		}
@@ -131,13 +135,23 @@ using namespace std;
 	void Model::adam(){
 		int j = 0;
 		this->regulazationNum = this->reg();
+		for(int i = 0;i<this->layers[this->currentLayer]->out;i++){
+			double tmpGrad=this->layers[this->currentLayer]->errorBias[i]/this->bacthSize;
+			this->layers[this->currentLayer]->errorBias[i] = 0.0;
+			this->layers[this->currentLayer]->pastMomentumBias[i]= 0.9*this->layers[this->currentLayer]->pastMomentumBias[i] + (0.1*tmpGrad*tmpGrad);
+			this->layers[this->currentLayer]->pastVelocityBias[i] = 0.999*this->layers[this->currentLayer]->pastVelocityBias[i] + (0.001*tmpGrad*tmpGrad);
+			double mHat = this->layers[this->currentLayer]->pastMomentumBias[i]/(1-pow(0.9,this->currentEpoch+1));
+			double vHat = this->layers[this->currentLayer]->pastVelocityBias[i]/(1-pow(0.999,this->currentEpoch+1));
+			this->layers[this->currentLayer]->bias[i]=this->layers[this->currentLayer]->bias[i]-this->currentLR*mHat/(sqrt(abs(vHat))+0.000001);
+		}
+
 		for(int i = 0;i<this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in;i++){
 			double tmpGrad = this->layers[this->currentLayer]->errorWeights[i]/this->bacthSize;
 			/*if(isnanf(tmpGrad)){
 				tmpGrad = this->normal_rand(this->layers[this->currentLayer]->gen);
 			}*/
 			this->layers[this->currentLayer]->errorWeights[i] = 0.0;
-			this->layers[this->currentLayer]->pastMomentum[i]= 0.9*this->layers[this->currentLayer]->pastMomentum[i] + (0.1*tmpGrad);
+			this->layers[this->currentLayer]->pastMomentum[i]= 0.9*this->layers[this->currentLayer]->pastMomentum[i] + (0.1*tmpGrad*tmpGrad);
 			/*if(isnanf(this->layers[this->currentLayer]->pastMomentum[i])){
 				this->layers[this->currentLayer]->pastMomentum[i]=this->normal_rand(this->layers[this->currentLayer]->gen);
 			}*/
@@ -176,14 +190,17 @@ using namespace std;
 				this->layers[this->currentLayer]->inputs.data(),1,tmpSigma.data(),
 				this->layers[this->currentLayer]->out,1.0,this->layers[this->currentLayer]->errorWeights.data(),
 				this->layers[this->currentLayer]->out);
-				vector<double> tmpWeights = vector<double>(this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in-1,0.0);
-				for(int i = 0;i<(this->layers[this->currentLayer]->in-1)*this->layers[this->currentLayer]->out;i++){
-					tmpWeights[(i%(this->layers[this->currentLayer]->in-1))*this->layers[this->currentLayer]->out+i/(this->layers[this->currentLayer]->in-1)] 
-					= this->layers[this->currentLayer]->weights.at(i+this->layers[this->currentLayer]->out);
+				vector<double> tmpWeights = vector<double>(this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in,0.0);
+				for(int i = 0;i<(this->layers[this->currentLayer]->in)*this->layers[this->currentLayer]->out;i++){
+					tmpWeights[(i%(this->layers[this->currentLayer]->in))*this->layers[this->currentLayer]->out+i/(this->layers[this->currentLayer]->in)] 
+					= this->layers[this->currentLayer]->weights.at(i);
 				}
-				cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[this->currentLayer]->in-1,this->layers[this->currentLayer]->out,1.0,
-				tmpSigma.data(),this->layers[this->currentLayer]->out,tmpWeights.data(),this->layers[this->currentLayer]->in-1,0.0,this->layers[this->currentLayer]->grads.data()
-				,this->layers[this->currentLayer]->in-1);
+				for(int i = 0;i<this->layers[this->currentLayer]->out;i++){
+					this->layers[this->currentLayer]->errorBias[i] = this->layers[this->currentLayer]->errorBias[i]+tmpSigma[i];
+				}
+				cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[this->currentLayer]->in,this->layers[this->currentLayer]->out,1.0,
+				tmpSigma.data(),this->layers[this->currentLayer]->out,tmpWeights.data(),this->layers[this->currentLayer]->in,0.0,this->layers[this->currentLayer]->grads.data()
+				,this->layers[this->currentLayer]->in);
 			}else{
 				/*vector<vector<double>> jacobian(this->datas->col2,vector<double>(this->datas->col2,0.0));
 				for(int i = 0;i<this->datas->col2;i++){
@@ -210,15 +227,18 @@ using namespace std;
 			this->layers[this->currentLayer]->out,1.0,this->layers[this->currentLayer]->errorWeights.data(),
 			this->layers[this->currentLayer]->out);
 			if(this->currentLayer != 0){
-				vector<double> tmpWeights = vector<double>(this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in-1,0.0);
-				for(int i = 0;i<(this->layers[this->currentLayer]->in-1)*this->layers[this->currentLayer]->out;i++){
-					tmpWeights[(i%(this->layers[this->currentLayer]->in-1))*this->layers[this->currentLayer]->out+i/(this->layers[this->currentLayer]->in-1)] 
-					= this->layers[this->currentLayer]->weights.at(i+this->layers[this->currentLayer]->out);
+				vector<double> tmpWeights = vector<double>(this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in,0.0);
+				for(int i = 0;i<(this->layers[this->currentLayer]->in)*this->layers[this->currentLayer]->out;i++){
+					tmpWeights[(i%(this->layers[this->currentLayer]->in))*this->layers[this->currentLayer]->out+i/(this->layers[this->currentLayer]->in)] 
+					= this->layers[this->currentLayer]->weights.at(i);
 				}
-				cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[this->currentLayer]->in-1,this->layers[this->currentLayer]->out,1.0,
-				tmpDActivedted.data(),this->layers[this->currentLayer]->out,tmpWeights.data(),this->layers[this->currentLayer]->in-1,0.0,this->layers[this->currentLayer]->grads.data()
-				,this->layers[this->currentLayer]->in-1);
+				cblas_dgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,1,this->layers[this->currentLayer]->in,this->layers[this->currentLayer]->out,1.0,
+				tmpDActivedted.data(),this->layers[this->currentLayer]->out,tmpWeights.data(),this->layers[this->currentLayer]->in,0.0,this->layers[this->currentLayer]->grads.data()
+				,this->layers[this->currentLayer]->in);
 			}
+			for(int i = 0;i<this->layers[this->currentLayer]->out;i++){
+					this->layers[this->currentLayer]->errorBias[i] = this->layers[this->currentLayer]->errorBias[i]+tmpDActivedted[i];
+				}
 			
 		}
 	}
@@ -271,7 +291,7 @@ using namespace std;
 			total += exp(this->layers[this->currentLayer]->outputs[i]);
 		}
 		for(int i = 0;i<this->layers[this->currentLayer]->out;i++){
-			this->layers[this->currentLayer]->outputsActiveted[i+1]=(exp(this->layers[this->currentLayer]->outputs[i]))/(total);
+			this->layers[this->currentLayer]->outputsActiveted[i]=(exp(this->layers[this->currentLayer]->outputs[i]))/(total);
 			/*if(isnanf(this->layers[this->currentLayer]->outputsActiveted[i+1])){
 				this->layers[this->currentLayer]->outputsActiveted[i+1]=this->normal_rand(this->layers[this->currentLayer]->gen);
 			}*/

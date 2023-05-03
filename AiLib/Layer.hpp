@@ -17,6 +17,10 @@ public:
 	vector<double> pastMomentum;
 	vector<double> pastVelocity;
 	vector<double> errorWeights;
+	vector<double> errorBias;
+	vector<double> bias;
+	vector<double> pastMomentumBias;
+	vector<double> pastVelocityBias;
 	LayerFunction F;
 	normal_distribution<double> random_dist;
 	mt19937 gen;

@@ -10,7 +10,7 @@ import math
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
-df_train = pd.read_csv("/home/musasina/Desktop/AI_Boost/train.csv",delimiter = ",").sample(frac=1)
+df_train = pd.read_csv("/home/musasina/Desktop/AI_Boost/train.csv",delimiter = ",")
 train_data = df_train.iloc[:42000,1:].values.astype(float).tolist()
 train_result = df_train.iloc[:42000,0].values.astype(float).tolist()
 train_result = np.array(train_result,dtype=float).reshape((42000,1)).tolist()
@@ -36,7 +36,7 @@ for row in y_train:
     for col in row:
         tmp.push_back(float(col))
     train_result_vec.push_back(tmp)
-dataset = DataSet(train_data_vec,train_result_vec,42000,784,42000,10)
+dataset = DataSet(train_data_vec,train_result_vec,33600,784,33600,10)
 Relu = aib.Relu
 softmax= aib.SoftMax
 sigmod = aib.Sigmoid
@@ -52,7 +52,7 @@ layer3 = Layer(400,10,sigmod)
 layer_list = aib.LayerPtrVector()
 for i in [layer1,layer2,layer3]:
     layer_list.push_back(i)
-model = Model(layer_list,dataset,False,10000,0.0,l1reg,0.0,CELoos,0.001,True,100,3)
+model = Model(layer_list,dataset,False,30000,0.0,l1reg,0.0,CELoos,0.001,True,100,3)
 
 model.trainModel()
 

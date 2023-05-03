@@ -12,13 +12,13 @@ using namespace std;
 
 Layer::Layer(int in, int out, LayerFunction f)
 {
-	this->inputs = vector<double>(in+1);
+	this->inputs = vector<double>(in);
 	this->outputs= vector<double>(out);
-	this->outputsActiveted= vector<double>(out + 1);
-	this->weights= vector<double>(out * (in+1));
+	this->outputsActiveted= vector<double>(out);
+	this->weights= vector<double>(out * (in));
 	this->F = f;
-	this->outputsActiveted[0] = 1.0;
-	this->in = in+1;
+	//this->outputsActiveted[0] = 1.0;
+	this->in = in;
 	this->out = out;
 	this->pastMomentum = vector<double>(out*this->in,0.0);
 	this->pastVelocity = vector<double>(out*this->in,0.0);
@@ -27,6 +27,10 @@ Layer::Layer(int in, int out, LayerFunction f)
 	this->gen = mt19937(random_device{}());
 	double std = sqrt(2.000000/(this->in+this->out));
 	this->random_dist = normal_distribution<double>(0.0,std);
+	this->errorBias = vector<double>(out,0.0);
+	this->bias = vector<double>(out,0.0);
+	this->pastMomentumBias = vector<double>(out,0.0);
+	this->pastVelocityBias = vector<double>(out,0.0);
 	for(int i = 0;i<out*this->in;i++){
 		this->weights[i]=this->random_dist(gen);
 	}

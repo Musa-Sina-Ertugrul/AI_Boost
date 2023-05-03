@@ -12,6 +12,7 @@ using namespace std;
 
 DataSet::DataSet(vector<vector<double>>& inputs,vector<vector<double>>& outputs,int row1,int col1,int row2, int col2) {
 	this->inputs = inputs;
+
     this->outputs = outputs;
     this->col1 = col1;
     this->col2 = col2;
