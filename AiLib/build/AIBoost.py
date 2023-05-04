@@ -511,8 +511,8 @@ class Model(object):
     ZeroToOne = property(_AIBoost.Model_ZeroToOne_get, _AIBoost.Model_ZeroToOne_set)
     bacthSize = property(_AIBoost.Model_bacthSize_get, _AIBoost.Model_bacthSize_set)
 
-    def __init__(self, layers, arg3, boucingLR, epochs, dropOutRate, regType, regLambda, lossType, learningRate, ZeroToOne, bacthSize, layerNumber):
-        _AIBoost.Model_swiginit(self, _AIBoost.new_Model(layers, arg3, boucingLR, epochs, dropOutRate, regType, regLambda, lossType, learningRate, ZeroToOne, bacthSize, layerNumber))
+    def __init__(self, layers, datas, boucingLR, epochs, dropOutRate, regType, regLambda, lossType, learningRate, ZeroToOne, bacthSize, layerNumber):
+        _AIBoost.Model_swiginit(self, _AIBoost.new_Model(layers, datas, boucingLR, epochs, dropOutRate, regType, regLambda, lossType, learningRate, ZeroToOne, bacthSize, layerNumber))
     __swig_destroy__ = _AIBoost.delete_Model
 
     def trainModel(self):

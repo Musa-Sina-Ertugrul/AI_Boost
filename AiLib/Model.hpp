@@ -26,7 +26,7 @@ public:
 	double learningRate;
 	bool ZeroToOne;
 	int bacthSize;
-	Model(vector<Layer*> layers,DataSet*,bool boucingLR,int epochs,double dropOutRate,RegFType regType,double regLambda,
+	Model(vector<Layer*> layers,DataSet* datas,bool boucingLR,int epochs,double dropOutRate,RegFType regType,double regLambda,
 	LossFType lossType,double learningRate,bool ZeroToOne,int bacthSize,int layerNumber);
 	~Model();
 	void trainModel();

@@ -48,11 +48,11 @@ l1Loss = aib.L1Loss
 l2Loss = aib.L2Loss
 layer1 = Layer(784,400,tanH)
 layer2 = Layer(400,400,tanH)
-layer3 = Layer(400,10,sigmod)
+layer3 = Layer(400,10,softmax)
 layer_list = aib.LayerPtrVector()
 for i in [layer1,layer2,layer3]:
     layer_list.push_back(i)
-model = Model(layer_list,dataset,False,30000,0.0,l1reg,0.0,CELoos,0.001,True,100,3)
+model = Model(layer_list,dataset,False,1000,0.0,l1reg,0.0,CELoos,0.001,True,100,3)
 
 model.trainModel()
 
