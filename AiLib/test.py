@@ -52,7 +52,7 @@ layer3 = Layer(400,10,softmax)
 layer_list = aib.LayerPtrVector()
 for i in [layer1,layer2,layer3]:
     layer_list.push_back(i)
-model = Model(layer_list,dataset,False,1000,0.0,l1reg,0.0,CELoos,0.001,True,100,3)
+model = Model(layer_list,dataset,False,10000,0.0,l1reg,0.0,CELoos,0.001,True,100,3)
 
 model.trainModel()
 
