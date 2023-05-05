@@ -57,8 +57,8 @@ using namespace std;
 			if(ZeroToOne){
 				for(int j = 0;j<this->datas->col2;j++){
 					
-					cout<<"result size "<<this->results.at(j)<<endl;
-					cout<<" ouputs size "<<this->datas->outputs.at(this->currentEpoch).at(j)<<endl;
+					//cout<<"result size "<<this->results.at(j)<<endl;
+					//cout<<" ouputs size "<<this->datas->outputs.at(this->currentEpoch).at(j)<<endl;
 					if(this->results.at(j)>0.5 && this->datas->outputs.at(this->currentEpoch).at(j)>0.5){
 						correct = correct + 1.0;
 					}else if (this->results.at(j)<0.5 && this->datas->outputs.at(this->currentEpoch).at(j)<0.5)
@@ -66,7 +66,7 @@ using namespace std;
 						correct = correct + 1.0;
 					}
 				}
-				cout<<"---------"<<endl;
+				//cout<<"---------"<<endl;
 				correct /= (double)this->datas->col2+1.0;
 			}else{
 				for(int j = 0;j<this->layers[this->layerNumber-1]->out;j++){
@@ -154,7 +154,7 @@ using namespace std;
 			this->layers[this->currentLayer]->pastVelocityBias[i] = 0.999*this->layers[this->currentLayer]->pastVelocityBias[i] + (0.001*tmpGrad*tmpGrad);
 			double mHat = this->layers[this->currentLayer]->pastMomentumBias[i]/(1-pow(0.9,this->currentEpoch+1));
 			double vHat = this->layers[this->currentLayer]->pastVelocityBias[i]/(1-pow(0.999,this->currentEpoch+1));
-			this->layers[this->currentLayer]->bias[i]=this->layers[this->currentLayer]->bias[i]-(this->currentLR*mHat/(sqrt(abs(vHat))+0.000001));
+			this->layers[this->currentLayer]->bias[i]=this->layers[this->currentLayer]->bias[i]-(this->currentLR*mHat/(sqrt(abs(vHat))+0.000000000000001));
 		}
 
 		for(int i = 0;i<this->layers[this->currentLayer]->out*this->layers[this->currentLayer]->in;i++){
@@ -182,7 +182,7 @@ using namespace std;
 			/*if(isnanf(vHat)){
 				vHat = this->normal_rand(this->layers[this->currentLayer]->gen);
 			}*/
-			this->layers[this->currentLayer]->weights[i]=this->layers[this->currentLayer]->weights[i]-(mHat*(this->currentLR/(sqrt(abs(vHat))+0.000001)))
+			this->layers[this->currentLayer]->weights[i]=this->layers[this->currentLayer]->weights[i]-(mHat*(this->currentLR/(sqrt(abs(vHat))+0.000000000000001)))
 			+this->regLambda*this->regulazationNum;
 			/*if(isnanf(this->layers[this->currentLayer]->weights[i])){
 				this->layers[this->currentLayer]->weights[i]=this->normal_rand(this->layers[this->currentLayer]->gen);
@@ -412,7 +412,7 @@ using namespace std;
 			/*if(isnanf(this->layers[this->currentLayer]->inputs[i])){
 				this->layers[this->currentLayer]->inputs[i]=this->normal_rand(this->layers[this->currentLayer]->gen);
 			}*/
-			total += abs(this->layers[this->currentLayer]->inputs[i]);
+			total += this->layers[this->currentLayer]->inputs[i];
 		}
 		total = total/len;
 		double meansqr = 0.000000;
@@ -439,7 +439,7 @@ using namespace std;
 			}*/
 			total += abs(this->layers[this->currentLayer]->weights[i]);
 		}
-		return this->regLambda*total;
+		return total;
 	}
 	inline double Model::l2Reg() {
 		double total(0.000000);
@@ -449,7 +449,7 @@ using namespace std;
 			}*/
 			total += this->layers[this->currentLayer]->weights[i]*this->layers[this->currentLayer]->weights[i];
 		}
-		return this->regLambda * total;
+		return total;
 	}
 	double Model::reg() {
 		switch (this->regType)
